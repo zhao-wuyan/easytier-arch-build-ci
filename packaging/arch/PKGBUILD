@@ -13,6 +13,8 @@ makedepends=(
   'cargo'
   'protobuf'
   'git'
+  'clang'
+  'llvm'
 )
 
 source=("${pkgname}-${pkgver}.tar.gz::https://github.com/EasyTier/EasyTier/archive/refs/tags/v${pkgver}.tar.gz")
@@ -23,6 +25,10 @@ build() {
 
   export CARGO_HOME="${srcdir}/cargo-home"
   export CARGO_TARGET_DIR="${srcdir}/target"
+
+  if command -v llvm-config >/dev/null; then
+    export LIBCLANG_PATH="$(llvm-config --libdir)"
+  fi
 
   cargo build --release --locked -p easytier --bin easytier-core --bin easytier-cli
   cargo build --release --locked -p easytier-web --bin easytier-web

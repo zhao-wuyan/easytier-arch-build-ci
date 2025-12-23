@@ -13,7 +13,7 @@ Source code is fetched from: https://github.com/EasyTier/EasyTier
 ## Local build (on Arch)
 
 ```bash
-sudo pacman -Syu --needed base-devel rust cargo protobuf git
+sudo pacman -Syu --needed base-devel rust cargo protobuf git clang llvm
 cd packaging/arch
 makepkg -s
 ```
@@ -24,12 +24,13 @@ The package file will be created in `packaging/arch/`.
 
 - Workflow: `.github/workflows/build-archpkg.yml`
 - Uses `archlinux:base-devel` container
-- Installs `rust cargo protobuf git` and runs `makepkg`
+- Installs `rust cargo protobuf git clang llvm` and runs `makepkg`
 - Build outputs are uploaded as GitHub Actions artifacts
 
 ## Notes
 
 - `protobuf` is required because EasyTier's build uses `protoc` on Linux.
+- `clang/llvm` are required because `kcp-sys` uses `bindgen`, which needs `libclang`.
 - `sha256sums` is set to `SKIP` by default for convenience; for real distribution you should pin checksums.
 
 ## Bumping EasyTier version
@@ -43,7 +44,7 @@ Optionally compute checksums with `updpkgsums` (from `pacman-contrib`).
 
 ## Create a public GitHub repository
 
-1. Create an empty *public* repository on GitHub (UI) named `easytier-archpkg`.
+1. Create an empty *public* repository on GitHub (UI).
 2. Push this folder to GitHub:
 
 ```bash

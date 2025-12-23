@@ -18,7 +18,7 @@ jobs:
 
       - name: Install build dependencies
         run: |
-          pacman -Syu --noconfirm --needed rust cargo protobuf git
+          pacman -Syu --noconfirm --needed rust cargo protobuf git clang llvm
 
       - name: Restore cargo cache
         uses: actions/cache@v4
@@ -34,7 +34,7 @@ jobs:
         run: |
           useradd -m builder
           chown -R builder:builder "$GITHUB_WORKSPACE"
-          su builder -c "cd packaging/arch && rm -rf pkg && makepkg --noconfirm"
+          su builder -c "cd packaging/arch && rm -rf pkg && LIBCLANG_PATH=$(llvm-config --libdir) makepkg --noconfirm"
 
       - name: Upload package artifact
         uses: actions/upload-artifact@v4
