@@ -8,6 +8,10 @@ arch=('x86_64')
 url="https://github.com/EasyTier/EasyTier"
 license=('LGPL3')
 
+depends=(
+  'zstd'
+)
+
 makedepends=(
   'rust'
   'cargo'
@@ -15,6 +19,8 @@ makedepends=(
   'git'
   'clang'
   'llvm'
+  'pkgconf'
+  'zstd'
 )
 
 source=("${pkgname}-${pkgver}.tar.gz::https://github.com/EasyTier/EasyTier/archive/refs/tags/v${pkgver}.tar.gz")
@@ -26,9 +32,13 @@ build() {
   export CARGO_HOME="${srcdir}/cargo-home"
   export CARGO_TARGET_DIR="${srcdir}/target"
 
+  # kcp-sys uses bindgen -> needs libclang
   if command -v llvm-config >/dev/null; then
     export LIBCLANG_PATH="$(llvm-config --libdir)"
   fi
+
+  # zstd-sys can use system libzstd via pkg-config
+  export ZSTD_SYS_USE_PKG_CONFIG=1
 
   cargo build --release --locked -p easytier --bin easytier-core --bin easytier-cli
   cargo build --release --locked -p easytier-web --bin easytier-web
