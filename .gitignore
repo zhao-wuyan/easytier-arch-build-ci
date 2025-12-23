@@ -1,4 +1,4 @@
-﻿# Build artifacts
+# Build artifacts
 packaging/arch/*.pkg.tar.*
 packaging/arch/*.sig
 packaging/arch/src/

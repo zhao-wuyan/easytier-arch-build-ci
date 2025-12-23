@@ -1,4 +1,4 @@
-﻿# EasyTier Arch Package (GitHub Actions)
+# EasyTier Arch Package (GitHub Actions)
 
 This repository builds EasyTier into an Arch Linux package (`.pkg.tar.zst`) using GitHub Actions.
 
