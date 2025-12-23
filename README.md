@@ -32,6 +32,7 @@ The package file will be created in `packaging/arch/`.
 - `protobuf` is required because EasyTier's build uses `protoc` on Linux.
 - `clang/llvm` are required because `kcp-sys` uses `bindgen`, which needs `libclang`.
 - `pkgconf` + `zstd` are required so `zstd-sys` can link to `libzstd`.
+- If you see linker errors about `ring_*` or `ikcp_*`, they may be caused by GCC LTO objects being linked with `lld`; this repo strips `-flto=auto` / `-fuse-ld=lld` for the build inside `PKGBUILD`.
 - `sha256sums` is set to `SKIP` by default for convenience; for real distribution you should pin checksums.
 
 ## Bumping EasyTier version

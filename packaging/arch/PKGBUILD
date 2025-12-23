@@ -32,6 +32,14 @@ build() {
   export CARGO_HOME="${srcdir}/cargo-home"
   export CARGO_TARGET_DIR="${srcdir}/target"
 
+  # Arch's makepkg toolchain flags may enable GCC LTO and lld at the same time.
+  # Some Rust crates build C deps (ring/kcp) with $CFLAGS; if those become GCC-LTO
+  # objects, lld may fail to link them, causing missing symbols.
+  export CFLAGS="${CFLAGS//-flto=auto/}"
+  export CXXFLAGS="${CXXFLAGS//-flto=auto/}"
+  export LDFLAGS="${LDFLAGS//-flto=auto/}"
+  export LDFLAGS="${LDFLAGS//-fuse-ld=lld/}"
+
   # kcp-sys uses bindgen -> needs libclang
   if command -v llvm-config >/dev/null; then
     export LIBCLANG_PATH="$(llvm-config --libdir)"
