@@ -1,0 +1,7 @@
+﻿# Ignore makepkg outputs
+*.pkg.tar.*
+*.sig
+src/
+pkg/
+*.log
+*.tar.*

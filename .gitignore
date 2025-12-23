@@ -1,0 +1,15 @@
+﻿# Build artifacts
+packaging/arch/*.pkg.tar.*
+packaging/arch/*.sig
+packaging/arch/src/
+packaging/arch/pkg/
+packaging/arch/*.log
+packaging/arch/*.tar.*
+
+# Cargo
+.cargo/
+target/
+
+# OS/editor
+.DS_Store
+Thumbs.db

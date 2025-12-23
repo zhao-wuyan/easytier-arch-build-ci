@@ -1,0 +1,37 @@
+﻿# Maintainer: you <you@example.com>
+
+pkgname=easytier
+pkgver=2.4.5
+pkgrel=1
+pkgdesc="A simple, secure, decentralized virtual private network solution"
+arch=('x86_64')
+url="https://github.com/EasyTier/EasyTier"
+license=('LGPL3')
+
+makedepends=(
+  'rust'
+  'cargo'
+  'protobuf'
+  'git'
+)
+
+source=("${pkgname}-${pkgver}.tar.gz::https://github.com/EasyTier/EasyTier/archive/refs/tags/v${pkgver}.tar.gz")
+sha256sums=('SKIP')
+
+build() {
+  cd "EasyTier-${pkgver}"
+
+  export CARGO_HOME="${srcdir}/cargo-home"
+  export CARGO_TARGET_DIR="${srcdir}/target"
+
+  cargo build --release --locked -p easytier --bin easytier-core --bin easytier-cli
+  cargo build --release --locked -p easytier-web --bin easytier-web
+}
+
+package() {
+  install -Dm755 "${srcdir}/target/release/easytier-core" "${pkgdir}/usr/bin/easytier-core"
+  install -Dm755 "${srcdir}/target/release/easytier-cli"  "${pkgdir}/usr/bin/easytier-cli"
+  install -Dm755 "${srcdir}/target/release/easytier-web"  "${pkgdir}/usr/bin/easytier-web"
+
+  install -Dm644 "EasyTier-${pkgver}/LICENSE" "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
+}
