@@ -36,10 +36,10 @@ jobs:
         run: |
           pacman -Syu --noconfirm --needed \
             curl tar xz \
-            rust cargo protobuf git \
+            rust protobuf git \
             clang llvm pkgconf zstd \
             nodejs pnpm python \
-            webkit2gtk-4.1 javascriptcoregtk-4.1 gtk3 librsvg libayatana-appindicator
+            webkit2gtk-4.1 gtk3 librsvg libayatana-appindicator
 
       - name: Restore cache (cargo + pnpm)
         uses: actions/cache@v4

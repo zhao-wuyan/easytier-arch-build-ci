@@ -19,10 +19,10 @@ jobs:
       - name: Install build dependencies
         run: |
           pacman -Syu --noconfirm --needed \
-            rust cargo protobuf git \
+            rust protobuf git \
             clang llvm pkgconf zstd \
             nodejs pnpm python \
-            webkit2gtk-4.1 javascriptcoregtk-4.1 gtk3 librsvg libayatana-appindicator
+            webkit2gtk-4.1 gtk3 librsvg libayatana-appindicator
 
       - name: Restore build cache
         uses: actions/cache@v4

@@ -31,7 +31,6 @@ makedepends=(
 
   # tauri / webkit
   'webkit2gtk-4.1'
-  'javascriptcoregtk-4.1'
   'gtk3'
   'librsvg'
   'libayatana-appindicator'
@@ -125,7 +124,6 @@ package_easytier-gui() {
   depends=(
     'zstd'
     'webkit2gtk-4.1'
-    'javascriptcoregtk-4.1'
     'gtk3'
     'librsvg'
     'libayatana-appindicator'
