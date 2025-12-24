@@ -69,15 +69,18 @@ build() {
   # zstd-sys can use system libzstd via pkg-config
   export ZSTD_SYS_USE_PKG_CONFIG=1
 
+  export PNPM_STORE_PATH="${srcdir}/pnpm-store"
+  pnpm config set store-dir "${PNPM_STORE_PATH}"
+  export PNPM_DANGEROUSLY_ALLOW_ALL_BUILDS=true
+  pnpm install --frozen-lockfile
+  pnpm --dir easytier-web/frontend-lib build
+  pnpm --dir tauri-plugin-vpnservice build
+
   cargo build --release --locked -p easytier --bin easytier-core --bin easytier-cli
   cargo build --release --locked -p easytier-web --bin easytier-web
 
-  # Build GUI (Tauri)
-  export PNPM_STORE_PATH="${srcdir}/pnpm-store"
-  pnpm config set store-dir "${PNPM_STORE_PATH}"
-
-  pnpm install --frozen-lockfile
-  pnpm -C easytier-gui tauri build --no-bundle
+  pnpm --dir easytier-gui build
+  pnpm --dir easytier-gui tauri build --no-bundle
 }
 
 package_easytier() {
