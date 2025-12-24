@@ -59,6 +59,7 @@ jobs:
             .cache/cargo/git
             .cache/target
             .cache/pnpm-store
+            .cache/tauri
           key: appimage-cache-${{ steps.version.outputs.version }}-${{ github.run_id }}
           restore-keys: |
             appimage-cache-${{ steps.version.outputs.version }}-
@@ -91,6 +92,9 @@ jobs:
           # linuxdeploy is distributed as an AppImage; in CI containers FUSE is often unavailable.
           # This makes AppImages extract and run without FUSE mounts.
           export APPIMAGE_EXTRACT_AND_RUN=1
+          # linuxdeploy's bundled strip may be too old for Arch libs using `.relr.dyn` (SHT_RELR),
+          # so disable stripping to avoid hard failures.
+          export NO_STRIP=1
 
           # Allow dependency install scripts in CI (esbuild, etc.)
           pnpm config set dangerouslyAllowAllBuilds true
@@ -142,6 +146,7 @@ jobs:
             .cache/cargo/git
             .cache/target
             .cache/pnpm-store
+            .cache/tauri
           key: appimage-cache-${{ steps.version.outputs.version }}-${{ github.run_id }}
 
       - name: Upload build logs
