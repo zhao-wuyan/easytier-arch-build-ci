@@ -77,7 +77,6 @@ build() {
   pnpm config set store-dir "${PNPM_STORE_PATH}"
 
   pnpm install --frozen-lockfile
-  pnpm -C easytier-gui build
   pnpm -C easytier-gui tauri build --no-bundle
 }
 
@@ -89,7 +88,7 @@ package_easytier() {
   install -Dm755 "${srcdir}/target/release/easytier-cli"  "${pkgdir}/usr/bin/easytier-cli"
   install -Dm755 "${srcdir}/target/release/easytier-web"  "${pkgdir}/usr/bin/easytier-web"
 
-  install -Dm644 "EasyTier-${pkgver}/LICENSE" "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
+  install -Dm644 "${srcdir}/EasyTier-${pkgver}/LICENSE" "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
 }
 
 package_easytier-gui() {
@@ -104,12 +103,12 @@ package_easytier-gui() {
 
   local gui_bin="${srcdir}/target/release/easytier-gui"
   if [[ ! -f "${gui_bin}" ]]; then
-    gui_bin="EasyTier-${pkgver}/easytier-gui/src-tauri/target/release/easytier-gui"
+    gui_bin="${srcdir}/EasyTier-${pkgver}/easytier-gui/src-tauri/target/release/easytier-gui"
   fi
 
   install -Dm755 "${gui_bin}" "${pkgdir}/usr/bin/easytier-gui"
   install -Dm644 "${srcdir}/EasyTier-${pkgver}/easytier-gui/src-tauri/icons/icon.png" "${pkgdir}/usr/share/pixmaps/easytier-gui.png"
   install -Dm644 "${startdir}/easytier-gui.desktop" "${pkgdir}/usr/share/applications/easytier-gui.desktop"
 
-  install -Dm644 "EasyTier-${pkgver}/LICENSE" "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
+  install -Dm644 "${srcdir}/EasyTier-${pkgver}/LICENSE" "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
 }
