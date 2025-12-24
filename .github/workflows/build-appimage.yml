@@ -172,7 +172,8 @@ jobs:
         run: |
           set -euxo pipefail
           mkdir -p out
-          cp -v EasyTier-${{ steps.version.outputs.version }}/easytier-gui/src-tauri/target/release/bundle/appimage/*.AppImage out/
+          # Tauri writes bundles to $CARGO_TARGET_DIR; we set it to $GITHUB_WORKSPACE/.cache/target in the build step.
+          cp -v .cache/target/release/bundle/appimage/*.AppImage out/
 
       - name: Upload AppImage
         uses: actions/upload-artifact@v4
