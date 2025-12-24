@@ -49,6 +49,7 @@ jobs:
             xdg-utils \
             fuse2 squashfs-tools \
             patchelf gstreamer gst-plugins-base gst-plugins-good \
+            gdk-pixbuf2 \
             webkit2gtk-4.1 gtk3 librsvg libayatana-appindicator
 
       - name: Restore cache (cargo + pnpm)
@@ -72,6 +73,16 @@ jobs:
           command -v mksquashfs
           command -v patchelf
           command -v gst-inspect-1.0
+          # linuxdeploy-plugin-gtk uses gdk-pixbuf pkg-config dirs; on Arch the pacman hook may not have created them yet.
+          if command -v pkgconf >/dev/null; then PC=pkgconf; else PC=pkg-config; fi
+          gdk_bin_dir="$($PC --variable=gdk_pixbuf_binarydir gdk-pixbuf-2.0 || true)"
+          gdk_mod_dir="$($PC --variable=gdk_pixbuf_moduledir gdk-pixbuf-2.0 || true)"
+          for d in "$gdk_bin_dir" "$gdk_mod_dir"; do
+            if [[ -n "${d}" && ! -e "${d}" ]]; then
+              echo "Creating missing gdk-pixbuf dir: ${d}"
+              mkdir -p "${d}"
+            fi
+          done
 
       - name: Download EasyTier sources
         run: |
