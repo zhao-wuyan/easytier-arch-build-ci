@@ -50,13 +50,30 @@ jobs:
           export PNPM_STORE_PATH="$GITHUB_WORKSPACE/.cache/pnpm-store"
           pnpm config set store-dir "$PNPM_STORE_PATH"
 
-          # Allow required dependency install scripts in CI (esbuild, etc.)
-          export PNPM_DANGEROUSLY_ALLOW_ALL_BUILDS=true
+          # Allow dependency install scripts in CI (esbuild, etc.)
+          pnpm config set dangerouslyAllowAllBuilds true
 
           # CI/Node build may crash when loading vite-plugin-vue-devtools (it assumes browser localStorage).
           # This plugin is only for development, so strip it for packaging builds.
           sed -i "/vite-plugin-vue-devtools/d" easytier-gui/vite.config.ts
           sed -i "/VueDevTools()/d" easytier-gui/vite.config.ts
+
+          # Some dependencies assume browser localStorage even during Node-side config loading.
+          # Provide a minimal polyfill for the build process.
+          cat > "$GITHUB_WORKSPACE/localstorage-polyfill.mjs" <<'EOF'
+          if (typeof globalThis.localStorage === 'undefined') {
+            const store = new Map();
+            globalThis.localStorage = {
+              getItem: (k) => (store.has(String(k)) ? store.get(String(k)) : null),
+              setItem: (k, v) => { store.set(String(k), String(v)); },
+              removeItem: (k) => { store.delete(String(k)); },
+              clear: () => { store.clear(); },
+              key: (i) => Array.from(store.keys())[i] ?? null,
+              get length() { return store.size; },
+            };
+          }
+          EOF
+          export NODE_OPTIONS="--import $GITHUB_WORKSPACE/localstorage-polyfill.mjs"
 
           pnpm install --frozen-lockfile
           pnpm --dir easytier-web/frontend-lib build
