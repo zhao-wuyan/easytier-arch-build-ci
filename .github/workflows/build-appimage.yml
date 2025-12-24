@@ -1,6 +1,9 @@
 name: build-appimage
 
 on:
+  push:
+    tags:
+      - "v*"
   workflow_dispatch:
     inputs:
       version:
@@ -15,6 +18,20 @@ jobs:
       image: archlinux:base-devel
 
     steps:
+      - name: Determine version
+        id: version
+        shell: bash
+        env:
+          INPUT_VERSION: ${{ github.event.inputs.version }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          if [[ -n "${INPUT_VERSION}" ]]; then
+            echo "version=${INPUT_VERSION}" >> "$GITHUB_OUTPUT"
+          else
+            echo "version=${REF_NAME#v}" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Install build dependencies
         run: |
           pacman -Syu --noconfirm --needed \
@@ -22,7 +39,7 @@ jobs:
             rust cargo protobuf git \
             clang llvm pkgconf zstd \
             nodejs pnpm python \
-            webkit2gtk gtk3 librsvg libayatana-appindicator
+            webkit2gtk-4.1 javascriptcoregtk-4.1 gtk3 librsvg libayatana-appindicator
 
       - name: Restore cache (cargo + pnpm)
         uses: actions/cache@v4
@@ -31,20 +48,20 @@ jobs:
             .cache/cargo/registry
             .cache/cargo/git
             .cache/pnpm-store
-          key: appimage-cache-${{ inputs.version }}
+          key: appimage-cache-${{ steps.version.outputs.version }}
           restore-keys: |
             appimage-cache-
 
       - name: Download EasyTier sources
         run: |
           set -euxo pipefail
-          curl -L -o easytier-src.tar.gz "https://github.com/EasyTier/EasyTier/archive/refs/tags/v${{ inputs.version }}.tar.gz"
+          curl -L -o easytier-src.tar.gz "https://github.com/EasyTier/EasyTier/archive/refs/tags/v${{ steps.version.outputs.version }}.tar.gz"
           tar -xf easytier-src.tar.gz
 
       - name: Build AppImage
         run: |
           set -euxo pipefail
-          cd "EasyTier-${{ inputs.version }}"
+          cd "EasyTier-${{ steps.version.outputs.version }}"
 
           export CARGO_HOME="$GITHUB_WORKSPACE/.cache/cargo"
           export PNPM_STORE_PATH="$GITHUB_WORKSPACE/.cache/pnpm-store"
@@ -86,10 +103,10 @@ jobs:
         run: |
           set -euxo pipefail
           mkdir -p out
-          cp -v EasyTier-${{ inputs.version }}/easytier-gui/src-tauri/target/release/bundle/appimage/*.AppImage out/
+          cp -v EasyTier-${{ steps.version.outputs.version }}/easytier-gui/src-tauri/target/release/bundle/appimage/*.AppImage out/
 
       - name: Upload AppImage
         uses: actions/upload-artifact@v4
         with:
-          name: easytier-gui-appimage-${{ inputs.version }}
+          name: easytier-gui-appimage-${{ steps.version.outputs.version }}
           path: out/*.AppImage

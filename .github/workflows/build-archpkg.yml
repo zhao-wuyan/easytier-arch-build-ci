@@ -22,7 +22,7 @@ jobs:
             rust cargo protobuf git \
             clang llvm pkgconf zstd \
             nodejs pnpm python \
-            webkit2gtk gtk3 librsvg libayatana-appindicator
+            webkit2gtk-4.1 javascriptcoregtk-4.1 gtk3 librsvg libayatana-appindicator
 
       - name: Restore build cache
         uses: actions/cache@v4
