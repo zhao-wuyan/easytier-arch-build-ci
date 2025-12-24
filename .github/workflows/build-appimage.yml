@@ -40,6 +40,7 @@ jobs:
             clang llvm pkgconf zstd \
             nodejs pnpm python \
             xdg-utils \
+            fuse2 squashfs-tools \
             webkit2gtk-4.1 gtk3 librsvg libayatana-appindicator
 
       - name: Restore cache (cargo + pnpm)
@@ -48,6 +49,7 @@ jobs:
           path: |
             .cache/cargo/registry
             .cache/cargo/git
+            .cache/target
             .cache/pnpm-store
           key: appimage-cache-${{ steps.version.outputs.version }}
           restore-keys: |
@@ -65,8 +67,13 @@ jobs:
           cd "EasyTier-${{ steps.version.outputs.version }}"
 
           export CARGO_HOME="$GITHUB_WORKSPACE/.cache/cargo"
+          export CARGO_TARGET_DIR="$GITHUB_WORKSPACE/.cache/target"
           export PNPM_STORE_PATH="$GITHUB_WORKSPACE/.cache/pnpm-store"
           pnpm config set store-dir "$PNPM_STORE_PATH"
+
+          # linuxdeploy is distributed as an AppImage; in containers FUSE is often unavailable.
+          # This makes AppImages extract and run without FUSE mounts.
+          export APPIMAGE_EXTRACT_AND_RUN=1
 
           # Allow dependency install scripts in CI (esbuild, etc.)
           pnpm config set dangerouslyAllowAllBuilds true
@@ -98,7 +105,7 @@ jobs:
           pnpm --dir tauri-plugin-vpnservice build
 
           # Build + bundle as AppImage (single file)
-          pnpm --dir easytier-gui tauri build
+          pnpm --dir easytier-gui tauri build --bundles appimage
 
       - name: Collect artifacts
         run: |
