@@ -39,6 +39,7 @@ jobs:
             rust protobuf git \
             clang llvm pkgconf zstd \
             nodejs pnpm python \
+            xdg-utils \
             webkit2gtk-4.1 gtk3 librsvg libayatana-appindicator
 
       - name: Restore cache (cargo + pnpm)
