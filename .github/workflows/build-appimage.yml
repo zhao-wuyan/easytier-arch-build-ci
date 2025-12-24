@@ -2,6 +2,7 @@ name: build-appimage
 
 on:
   push:
+    branches: [ main ]
     tags:
       - "v*"
   workflow_dispatch:
@@ -18,6 +19,9 @@ jobs:
       image: archlinux:base-devel
 
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Determine version
         id: version
         shell: bash
@@ -27,10 +31,13 @@ jobs:
         run: |
           set -euo pipefail
           if [[ -n "${INPUT_VERSION}" ]]; then
-            echo "version=${INPUT_VERSION}" >> "$GITHUB_OUTPUT"
+            version="${INPUT_VERSION}"
+          elif [[ "${REF_NAME}" == v* ]]; then
+            version="${REF_NAME#v}"
           else
-            echo "version=${REF_NAME#v}" >> "$GITHUB_OUTPUT"
+            version="$(sed -n 's/^pkgver=//p' packaging/arch/PKGBUILD | head -n 1)"
           fi
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
 
       - name: Install build dependencies
         run: |
@@ -52,8 +59,9 @@ jobs:
             .cache/cargo/git
             .cache/target
             .cache/pnpm-store
-          key: appimage-cache-${{ steps.version.outputs.version }}
+          key: appimage-cache-${{ steps.version.outputs.version }}-${{ github.run_id }}
           restore-keys: |
+            appimage-cache-${{ steps.version.outputs.version }}-
             appimage-cache-
 
       - name: Sanity check bundler deps
@@ -79,6 +87,10 @@ jobs:
           export CARGO_TARGET_DIR="$GITHUB_WORKSPACE/.cache/target"
           export PNPM_STORE_PATH="$GITHUB_WORKSPACE/.cache/pnpm-store"
           pnpm config set store-dir "$PNPM_STORE_PATH"
+
+          # linuxdeploy is distributed as an AppImage; in CI containers FUSE is often unavailable.
+          # This makes AppImages extract and run without FUSE mounts.
+          export APPIMAGE_EXTRACT_AND_RUN=1
 
           # Allow dependency install scripts in CI (esbuild, etc.)
           pnpm config set dangerouslyAllowAllBuilds true
@@ -110,7 +122,16 @@ jobs:
           pnpm --dir tauri-plugin-vpnservice build
 
           # Build + bundle as AppImage (single file)
-          pnpm --dir easytier-gui tauri build --bundles appimage
+          if ! pnpm --dir easytier-gui tauri build --bundles appimage --verbose 2>&1 | tee "$GITHUB_WORKSPACE/tauri-build.log"; then
+            echo "::group::tauri-build.log (tail)"
+            tail -n 200 "$GITHUB_WORKSPACE/tauri-build.log" || true
+            echo "::endgroup::"
+
+            echo "::group::bundle dir listing"
+            find "$CARGO_TARGET_DIR/release/bundle" -maxdepth 4 -type f -print || true
+            echo "::endgroup::"
+            exit 1
+          fi
 
       - name: Save cache (cargo + pnpm)
         if: always()
@@ -121,7 +142,15 @@ jobs:
             .cache/cargo/git
             .cache/target
             .cache/pnpm-store
-          key: appimage-cache-${{ steps.version.outputs.version }}
+          key: appimage-cache-${{ steps.version.outputs.version }}-${{ github.run_id }}
+
+      - name: Upload build logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: easytier-gui-build-log-${{ steps.version.outputs.version }}
+          path: tauri-build.log
+          if-no-files-found: ignore
 
       - name: Collect artifacts
         run: |
