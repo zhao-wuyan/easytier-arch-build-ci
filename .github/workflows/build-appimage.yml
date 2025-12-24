@@ -53,6 +53,11 @@ jobs:
           # Allow required dependency install scripts in CI (esbuild, etc.)
           export PNPM_DANGEROUSLY_ALLOW_ALL_BUILDS=true
 
+          # CI/Node build may crash when loading vite-plugin-vue-devtools (it assumes browser localStorage).
+          # This plugin is only for development, so strip it for packaging builds.
+          sed -i "/vite-plugin-vue-devtools/d" easytier-gui/vite.config.ts
+          sed -i "/VueDevTools()/d" easytier-gui/vite.config.ts
+
           pnpm install --frozen-lockfile
           pnpm --dir easytier-web/frontend-lib build
           pnpm --dir tauri-plugin-vpnservice build

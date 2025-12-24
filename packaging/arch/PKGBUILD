@@ -69,6 +69,11 @@ build() {
   # zstd-sys can use system libzstd via pkg-config
   export ZSTD_SYS_USE_PKG_CONFIG=1
 
+  # CI/Node build may crash when loading vite-plugin-vue-devtools (it assumes browser localStorage).
+  # This plugin is only for development, so strip it for packaging builds.
+  sed -i "/vite-plugin-vue-devtools/d" easytier-gui/vite.config.ts
+  sed -i "/VueDevTools()/d" easytier-gui/vite.config.ts
+
   export PNPM_STORE_PATH="${srcdir}/pnpm-store"
   pnpm config set store-dir "${PNPM_STORE_PATH}"
   export PNPM_DANGEROUSLY_ALLOW_ALL_BUILDS=true

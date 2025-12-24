@@ -52,6 +52,7 @@ On SteamOS (Desktop Mode):
 - `clang/llvm` are required because `kcp-sys` uses `bindgen`, which needs `libclang`.
 - `pkgconf` + `zstd` are required so `zstd-sys` can link to `libzstd`.
 - `nodejs/pnpm/python` and `webkit2gtk/gtk3/...` are required to build the Tauri GUI.
+- CI builds strip `vite-plugin-vue-devtools` from `easytier-gui/vite.config.ts` because it may crash in Node/CI (browser `localStorage` assumption).
 - If you see linker errors about `ring_*` or `ikcp_*`, they may be caused by GCC LTO objects being linked with `lld`; this repo strips `-flto=auto` / `-fuse-ld=lld` during the build inside `PKGBUILD`.
 
 ## Bumping EasyTier version
