@@ -20,25 +20,28 @@ jobs:
         run: |
           pacman -Syu --noconfirm --needed \
             rust cargo protobuf git \
-            clang llvm pkgconf zstd
+            clang llvm pkgconf zstd \
+            nodejs pnpm python \
+            webkit2gtk gtk3 librsvg libayatana-appindicator
 
-      - name: Restore cargo cache
+      - name: Restore build cache
         uses: actions/cache@v4
         with:
           path: |
             packaging/arch/src/cargo-home
             packaging/arch/src/target
-          key: archpkg-cargo-${{ hashFiles('packaging/arch/PKGBUILD') }}
+            packaging/arch/src/pnpm-store
+          key: archpkg-cache-${{ hashFiles('packaging/arch/PKGBUILD') }}
           restore-keys: |
-            archpkg-cargo-
+            archpkg-cache-
 
-      - name: Build Arch package
+      - name: Build Arch package(s)
         run: |
           useradd -m builder
           chown -R builder:builder "$GITHUB_WORKSPACE"
           su builder -c "cd packaging/arch && rm -rf pkg && ZSTD_SYS_USE_PKG_CONFIG=1 LIBCLANG_PATH=$(llvm-config --libdir) makepkg --noconfirm"
 
-      - name: Upload package artifact
+      - name: Upload package artifact(s)
         uses: actions/upload-artifact@v4
         with:
           name: easytier-archpkg

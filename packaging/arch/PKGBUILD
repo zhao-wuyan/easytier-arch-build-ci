@@ -1,18 +1,18 @@
 # Maintainer: you <you@example.com>
 
-pkgname=easytier
+pkgbase=easytier
+pkgname=(
+  'easytier'
+  'easytier-gui'
+)
 pkgver=2.4.5
 pkgrel=1
-pkgdesc="A simple, secure, decentralized virtual private network solution"
 arch=('x86_64')
 url="https://github.com/EasyTier/EasyTier"
 license=('LGPL3')
 
-depends=(
-  'zstd'
-)
-
 makedepends=(
+  # rust
   'rust'
   'cargo'
   'protobuf'
@@ -20,11 +20,32 @@ makedepends=(
   'clang'
   'llvm'
   'pkgconf'
+
+  # zstd (system)
   'zstd'
+
+  # gui build
+  'nodejs'
+  'pnpm'
+  'python'
+
+  # tauri / webkit
+  'webkit2gtk'
+  'gtk3'
+  'librsvg'
+  'libayatana-appindicator'
 )
 
-source=("${pkgname}-${pkgver}.tar.gz::https://github.com/EasyTier/EasyTier/archive/refs/tags/v${pkgver}.tar.gz")
+source=("${pkgbase}-${pkgver}.tar.gz::https://github.com/EasyTier/EasyTier/archive/refs/tags/v${pkgver}.tar.gz")
 sha256sums=('SKIP')
+
+prepare() {
+  cd "EasyTier-${pkgver}"
+
+  # speed up rebuilds in CI by placing pnpm store under $srcdir (which is cacheable)
+  export PNPM_STORE_PATH="${srcdir}/pnpm-store"
+  pnpm config set store-dir "${PNPM_STORE_PATH}"
+}
 
 build() {
   cd "EasyTier-${pkgver}"
@@ -50,12 +71,45 @@ build() {
 
   cargo build --release --locked -p easytier --bin easytier-core --bin easytier-cli
   cargo build --release --locked -p easytier-web --bin easytier-web
+
+  # Build GUI (Tauri)
+  export PNPM_STORE_PATH="${srcdir}/pnpm-store"
+  pnpm config set store-dir "${PNPM_STORE_PATH}"
+
+  pnpm install --frozen-lockfile
+  pnpm -C easytier-gui build
+  pnpm -C easytier-gui tauri build --no-bundle
 }
 
-package() {
+package_easytier() {
+  pkgdesc="EasyTier core/cli/web"
+  depends=('zstd')
+
   install -Dm755 "${srcdir}/target/release/easytier-core" "${pkgdir}/usr/bin/easytier-core"
   install -Dm755 "${srcdir}/target/release/easytier-cli"  "${pkgdir}/usr/bin/easytier-cli"
   install -Dm755 "${srcdir}/target/release/easytier-web"  "${pkgdir}/usr/bin/easytier-web"
+
+  install -Dm644 "EasyTier-${pkgver}/LICENSE" "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
+}
+
+package_easytier-gui() {
+  pkgdesc="EasyTier GUI"
+  depends=(
+    'zstd'
+    'webkit2gtk'
+    'gtk3'
+    'librsvg'
+    'libayatana-appindicator'
+  )
+
+  local gui_bin="${srcdir}/target/release/easytier-gui"
+  if [[ ! -f "${gui_bin}" ]]; then
+    gui_bin="EasyTier-${pkgver}/easytier-gui/src-tauri/target/release/easytier-gui"
+  fi
+
+  install -Dm755 "${gui_bin}" "${pkgdir}/usr/bin/easytier-gui"
+  install -Dm644 "${srcdir}/EasyTier-${pkgver}/easytier-gui/src-tauri/icons/icon.png" "${pkgdir}/usr/share/pixmaps/easytier-gui.png"
+  install -Dm644 "${startdir}/easytier-gui.desktop" "${pkgdir}/usr/share/applications/easytier-gui.desktop"
 
   install -Dm644 "EasyTier-${pkgver}/LICENSE" "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
 }

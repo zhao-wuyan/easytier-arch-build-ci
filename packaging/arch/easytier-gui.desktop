@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=EasyTier
+Comment=EasyTier GUI
+Exec=easytier-gui
+Icon=easytier-gui
+Terminal=false
+Type=Application
+Categories=Network;
+StartupWMClass=easytier-gui
