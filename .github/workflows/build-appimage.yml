@@ -1,0 +1,73 @@
+name: build-appimage
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "EasyTier version tag (e.g. 2.4.5)"
+        required: true
+        default: "2.4.5"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: archlinux:base-devel
+
+    steps:
+      - name: Install build dependencies
+        run: |
+          pacman -Syu --noconfirm --needed \
+            curl tar xz \
+            rust cargo protobuf git \
+            clang llvm pkgconf zstd \
+            nodejs pnpm python \
+            webkit2gtk gtk3 librsvg libayatana-appindicator
+
+      - name: Restore cache (cargo + pnpm)
+        uses: actions/cache@v4
+        with:
+          path: |
+            .cache/cargo/registry
+            .cache/cargo/git
+            .cache/pnpm-store
+          key: appimage-cache-${{ inputs.version }}
+          restore-keys: |
+            appimage-cache-
+
+      - name: Download EasyTier sources
+        run: |
+          set -euxo pipefail
+          curl -L -o easytier-src.tar.gz "https://github.com/EasyTier/EasyTier/archive/refs/tags/v${{ inputs.version }}.tar.gz"
+          tar -xf easytier-src.tar.gz
+
+      - name: Build AppImage
+        run: |
+          set -euxo pipefail
+          cd "EasyTier-${{ inputs.version }}"
+
+          export CARGO_HOME="$GITHUB_WORKSPACE/.cache/cargo"
+          export PNPM_STORE_PATH="$GITHUB_WORKSPACE/.cache/pnpm-store"
+          pnpm config set store-dir "$PNPM_STORE_PATH"
+
+          # Allow required dependency install scripts in CI (esbuild, etc.)
+          export PNPM_DANGEROUSLY_ALLOW_ALL_BUILDS=true
+
+          pnpm install --frozen-lockfile
+          pnpm --dir easytier-web/frontend-lib build
+          pnpm --dir tauri-plugin-vpnservice build
+
+          # Build + bundle as AppImage (single file)
+          pnpm --dir easytier-gui tauri build
+
+      - name: Collect artifacts
+        run: |
+          set -euxo pipefail
+          mkdir -p out
+          cp -v EasyTier-${{ inputs.version }}/easytier-gui/src-tauri/target/release/bundle/appimage/*.AppImage out/
+
+      - name: Upload AppImage
+        uses: actions/upload-artifact@v4
+        with:
+          name: easytier-gui-appimage-${{ inputs.version }}
+          path: out/*.AppImage

@@ -33,6 +33,19 @@ The package files will be created in `packaging/arch/`.
 - Uses `archlinux:base-devel` container
 - Runs `makepkg` and uploads artifacts
 
+## SteamOS / Steam Deck (single file)
+
+If you want a single file that can be downloaded and run on SteamOS, use the AppImage build:
+
+- Workflow: `.github/workflows/build-appimage.yml`
+- Output: `*.AppImage` artifact
+
+On SteamOS (Desktop Mode):
+
+1. Download the `*.AppImage`
+2. Make it executable: `chmod +x easytier-gui*.AppImage`
+3. Run it: `./easytier-gui*.AppImage`
+
 ## Notes
 
 - `protobuf` is required because EasyTier's build uses `protoc` on Linux.
