@@ -61,7 +61,11 @@ jobs:
           cat > /etc/pacman.d/mirrorlist <<EOF
           Server = https://archive.archlinux.org/repos/${snapshot}/\$repo/os/\$arch
           EOF
-          pacman -Syyuu --noconfirm
+          # Downgrading across snapshots may hit transient file ownership conflicts when packages are split/merged.
+          # If this happens, remove the old dropins package and allow pacman to overwrite the one known path.
+          pacman -Syy --noconfirm
+          pacman -Rdd --noconfirm libmakepkg-dropins || true
+          pacman -Syyuu --noconfirm --overwrite /usr/share/makepkg/reproducible/python.sh
 
       - name: Install build dependencies
         run: |
