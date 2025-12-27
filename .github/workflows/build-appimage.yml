@@ -11,6 +11,10 @@ on:
         description: "EasyTier version tag (e.g. 2.4.5)"
         required: true
         default: "2.4.5"
+      arch_snapshot:
+        description: "Arch Linux Archive snapshot date (YYYY/MM/DD) to control glibc compatibility (SteamOS 3.7 is glibc 2.41)"
+        required: false
+        default: "2025/10/01"
 
 jobs:
   build:
@@ -27,6 +31,7 @@ jobs:
         shell: bash
         env:
           INPUT_VERSION: ${{ github.event.inputs.version }}
+          INPUT_ARCH_SNAPSHOT: ${{ github.event.inputs.arch_snapshot }}
           REF_NAME: ${{ github.ref_name }}
         run: |
           set -euo pipefail
@@ -38,6 +43,25 @@ jobs:
             version="$(sed -n 's/^pkgver=//p' packaging/arch/PKGBUILD | head -n 1)"
           fi
           echo "version=${version}" >> "$GITHUB_OUTPUT"
+
+          # Pin to an Arch Linux Archive snapshot so the produced AppImage can run on older distros/SteamOS.
+          # SteamOS currently ships glibc 2.41, so we must build against glibc <= 2.41.
+          if [[ -n "${INPUT_ARCH_SNAPSHOT}" ]]; then
+            snapshot="${INPUT_ARCH_SNAPSHOT}"
+          else
+            snapshot="2025/10/01"
+          fi
+          echo "arch_snapshot=${snapshot}" >> "$GITHUB_OUTPUT"
+
+      - name: Pin pacman to Arch Linux Archive snapshot
+        shell: bash
+        run: |
+          set -euxo pipefail
+          snapshot='${{ steps.version.outputs.arch_snapshot }}'
+          cat > /etc/pacman.d/mirrorlist <<EOF
+          Server = https://archive.archlinux.org/repos/${snapshot}/\$repo/os/\$arch
+          EOF
+          pacman -Syyuu --noconfirm
 
       - name: Install build dependencies
         run: |
@@ -51,6 +75,30 @@ jobs:
             patchelf gstreamer gst-plugins-base gst-plugins-good \
             gdk-pixbuf2 \
             webkit2gtk-4.1 gtk3 librsvg libayatana-appindicator
+
+      - name: Verify glibc version (SteamOS compatibility)
+        shell: bash
+        run: |
+          set -euxo pipefail
+          glibc_ver="$(ldd --version | head -n 1 | awk '{print $NF}')"
+          echo "Container glibc: ${glibc_ver}"
+          export GLIBC_VER="$glibc_ver"
+          python - <<'PY'
+          import os, re, sys
+          v = os.environ["GLIBC_VER"]
+          def parse(ver: str):
+            m = re.match(r"^(\d+)\.(\d+)", ver.strip())
+            if not m:
+              raise SystemExit(f"cannot parse glibc version: {ver!r}")
+            return int(m.group(1)), int(m.group(2))
+          cur = parse(v)
+          max_ok = parse("2.41")
+          if cur > max_ok:
+            raise SystemExit(
+              f"glibc {v} is too new for SteamOS (2.41). "
+              f"Choose an older arch_snapshot (YYYY/MM/DD) so glibc<=2.41."
+            )
+          PY
 
       - name: Restore cache (cargo + pnpm)
         uses: actions/cache/restore@v4

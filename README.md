@@ -44,7 +44,15 @@ On SteamOS (Desktop Mode):
 
 1. Download the `*.AppImage`
 2. Make it executable: `chmod +x easytier-gui*.AppImage`
-3. Run it: `./easytier-gui*.AppImage`
+3. Run it:
+   - Normal: `./easytier-gui*.AppImage`
+   - If you see `Cannot mount AppImage, please check your FUSE setup`: `./easytier-gui*.AppImage --appimage-extract-and-run`
+
+Notes:
+
+- SteamOS may not ship `fuse2` by default. Installing `fuse2` enables normal (mount-based) AppImage execution.
+- If you see `GLIBC_2.42 not found` on SteamOS (glibc 2.41), rebuild the AppImage using an older Arch Linux Archive snapshot:
+  - `workflow_dispatch` input `arch_snapshot` (default: `2025/10/01`)
 
 ## Notes
 
