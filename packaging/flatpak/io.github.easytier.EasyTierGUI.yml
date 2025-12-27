@@ -37,8 +37,12 @@ modules:
       - set -euxo pipefail
       - export HOME="$PWD"
       - export PATH="$CARGO_HOME/bin:$PATH"
-      - corepack enable
-      - corepack prepare pnpm@9.15.4 --activate
+      # Flatpak SDK extension paths are read-only; `corepack enable` fails when trying to write symlinks.
+      # Install pnpm into a writable prefix instead.
+      - mkdir -p "$PNPM_HOME"
+      - npm config set prefix "$PNPM_HOME"
+      - npm install -g pnpm@9.15.4
+      - export PATH="$PNPM_HOME/bin:$PATH"
       - cd EasyTier-2.4.5
       - pnpm config set store-dir "$PNPM_HOME"
       - pnpm config set dangerouslyAllowAllBuilds true
