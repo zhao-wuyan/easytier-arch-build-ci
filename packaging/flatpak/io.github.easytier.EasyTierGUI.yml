@@ -62,12 +62,27 @@ modules:
         fi
         "$PNPM" config set store-dir "$PNPM_STORE_PATH"
         "$PNPM" config set dangerouslyAllowAllBuilds true
-        "$PNPM" config set registry https://registry.npmmirror.com/
         "$PNPM" config set fetch-retries 5
         "$PNPM" config set fetch-retry-mintimeout 20000
         "$PNPM" config set fetch-retry-maxtimeout 120000
 
-        "$PNPM" install --frozen-lockfile
+        # CI DNS can be flaky; try a couple of registries before failing.
+        ok=0
+        for reg in https://registry.npmmirror.com/ https://registry.npmjs.org/ https://registry.yarnpkg.com/; do
+          "$PNPM" config set registry "$reg"
+          set +e
+          "$PNPM" install --frozen-lockfile
+          rc=$?
+          set -e
+          if [ "$rc" -eq 0 ]; then
+            ok=1
+            break
+          fi
+        done
+        if [ "$ok" -ne 1 ]; then
+          echo "pnpm install failed for all registries"
+          exit 1
+        fi
         "$PNPM" --dir easytier-web/frontend-lib build
         "$PNPM" --dir tauri-plugin-vpnservice build
         "$PNPM" --dir easytier-gui build

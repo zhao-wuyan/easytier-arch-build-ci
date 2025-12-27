@@ -13,6 +13,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Configure DNS (reduce EAI_AGAIN)
+        shell: bash
+        run: |
+          set -euxo pipefail
+          sudo rm -f /etc/resolv.conf
+          printf "nameserver 1.1.1.1\nnameserver 8.8.8.8\noptions timeout:2 attempts:3\n" | sudo tee /etc/resolv.conf
+          cat /etc/resolv.conf
+
       - name: Install Flatpak tooling
         shell: bash
         run: |
@@ -35,6 +43,14 @@ jobs:
             org.freedesktop.Sdk//24.08 \
             org.freedesktop.Sdk.Extension.rust-stable//24.08 \
             org.freedesktop.Sdk.Extension.node20//24.08
+
+      - name: Restore flatpak-builder cache
+        uses: actions/cache@v4
+        with:
+          path: .flatpak-builder/cache
+          key: flatpak-builder-cache-${{ hashFiles('packaging/flatpak/io.github.easytier.EasyTierGUI.yml') }}
+          restore-keys: |
+            flatpak-builder-cache-
 
       - name: Build Flatpak (repo + bundle)
         shell: bash
