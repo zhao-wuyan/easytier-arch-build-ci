@@ -31,6 +31,10 @@ modules:
         url: https://github.com/EasyTier/EasyTier/archive/refs/tags/v2.4.5.tar.gz
         sha256: 8bce53d0390bc9b2842bb863de1d4f18e6bb145fa41ec9d49683285e54423b98
       - type: file
+        url: https://github.com/pnpm/pnpm/releases/download/v9.15.4/pnpm-linuxstatic-x64
+        sha256: 2aab9d9e6e35f106c52c46b750c3a36277dd9a58cb517c818b5efc930cf3601c
+        dest-filename: pnpm-linuxstatic-x64
+      - type: file
         path: io.github.easytier.EasyTierGUI.desktop
       - type: file
         path: io.github.easytier.EasyTierGUI.metainfo.xml
@@ -38,23 +42,15 @@ modules:
       - set -euxo pipefail
       - export HOME="$PWD"
       - export PATH="$CARGO_HOME/bin:$PATH"
-      # Flatpak SDK extension paths are read-only; `corepack enable` fails when trying to write symlinks.
-      # Install pnpm into a writable prefix instead.
       - mkdir -p "$PNPM_HOME" "$PNPM_STORE_PATH"
-      - npm config set prefix "$PNPM_HOME"
-      - npm config set fetch-retries 5
-      - npm config set fetch-retry-mintimeout 20000
-      - npm config set fetch-retry-maxtimeout 120000
-      - |
-        set -euxo pipefail
-        for i in 1 2 3 4 5; do
-          npm install -g pnpm@9.15.4 && break
-          sleep "$((i * 5))"
-        done
+      # Avoid npm registry DNS flakiness in CI by using the pnpm static binary from GitHub releases.
+      - install -Dm755 "$FLATPAK_BUILDER_BUILDDIR/pnpm-linuxstatic-x64" "$PNPM_HOME/bin/pnpm"
       - export PATH="$PNPM_HOME/bin:$PATH"
-      - cd EasyTier-2.4.5
+      - pnpm -v
+      - cd EasyTier-*
       - pnpm config set store-dir "$PNPM_STORE_PATH"
       - pnpm config set dangerouslyAllowAllBuilds true
+      - pnpm config set registry https://registry.npmmirror.com/
       - pnpm config set fetch-retries 5
       - pnpm config set fetch-retry-mintimeout 20000
       - pnpm config set fetch-retry-maxtimeout 120000
