@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=EasyTier GUI
+Comment=EasyTier GUI
+Exec=easytier-gui
+Icon=io.github.easytier.EasyTierGUI
+Terminal=false
+Categories=Network;Utility;

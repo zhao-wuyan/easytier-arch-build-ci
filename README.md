@@ -52,7 +52,16 @@ Notes:
 
 - SteamOS may not ship `fuse2` by default. Installing `fuse2` enables normal (mount-based) AppImage execution.
 - If you see `GLIBC_2.42 not found` on SteamOS (glibc 2.41), rebuild the AppImage using an older Arch Linux Archive snapshot:
-  - `workflow_dispatch` input `arch_snapshot` (default: `2025/10/01`)
+  - `workflow_dispatch` input `arch_snapshot` (default: `2025/07/01`)
+
+## Flatpak (SteamOS recommended)
+
+SteamOS may have issues running AppImage (FUSE/glibc/Wayland/WebKitGTK). Flatpak is usually the most reliable option.
+
+- Manifest: `packaging/flatpak/io.github.easytier.EasyTierGUI.yml`
+- CI workflow (test build): `.github/workflows/build-flatpak.yml`
+
+Flathub note: Flathub builds are offline, so Node dependencies must be vendored (e.g. via flatpak-builder-tools node generator) before submitting.
 
 ## Notes
 

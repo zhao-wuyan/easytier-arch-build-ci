@@ -1,0 +1,61 @@
+app-id: io.github.easytier.EasyTierGUI
+runtime: org.freedesktop.Platform
+runtime-version: "24.08"
+sdk: org.freedesktop.Sdk
+
+sdk-extensions:
+  - org.freedesktop.Sdk.Extension.rust-stable
+  - org.freedesktop.Sdk.Extension.node20
+
+command: easytier-gui
+
+finish-args:
+  - --share=ipc
+  - --share=network
+  - --socket=wayland
+  - --socket=fallback-x11
+  - --device=dri
+
+modules:
+  - name: easytier-gui
+    buildsystem: simple
+    build-options:
+      append-path: /usr/lib/sdk/rust-stable/bin:/usr/lib/sdk/node20/bin
+      env:
+        CARGO_HOME: /run/build/easytier-gui/.cache/cargo
+        RUSTUP_HOME: /run/build/easytier-gui/.cache/rustup
+        PNPM_HOME: /run/build/easytier-gui/.cache/pnpm
+    sources:
+      - type: archive
+        url: https://github.com/EasyTier/EasyTier/archive/refs/tags/v2.4.5.tar.gz
+        sha256: 8bce53d0390bc9b2842bb863de1d4f18e6bb145fa41ec9d49683285e54423b98
+      - type: file
+        path: io.github.easytier.EasyTierGUI.desktop
+      - type: file
+        path: io.github.easytier.EasyTierGUI.metainfo.xml
+    build-commands:
+      - set -euxo pipefail
+      - export HOME="$PWD"
+      - export PATH="$CARGO_HOME/bin:$PATH"
+      - corepack enable
+      - corepack prepare pnpm@9.15.4 --activate
+      - cd EasyTier-2.4.5
+      - pnpm config set store-dir "$PNPM_HOME"
+      - pnpm config set dangerouslyAllowAllBuilds true
+      - pnpm install --frozen-lockfile
+      - pnpm --dir easytier-web/frontend-lib build
+      - pnpm --dir tauri-plugin-vpnservice build
+      - pnpm --dir easytier-gui build
+      - cd easytier-gui/src-tauri
+      - cargo build --release --bins --features tauri/custom-protocol
+      - install -Dm755 target/release/easytier-gui /app/bin/easytier-gui
+      - install -Dm644 "$FLATPAK_BUILDER_BUILDDIR/io.github.easytier.EasyTierGUI.desktop" /app/share/applications/io.github.easytier.EasyTierGUI.desktop
+      - install -Dm644 "$FLATPAK_BUILDER_BUILDDIR/io.github.easytier.EasyTierGUI.metainfo.xml" /app/share/metainfo/io.github.easytier.EasyTierGUI.metainfo.xml
+      - |
+        set -euxo pipefail
+        icon_src=""
+        if [ -f "icons/128x128.png" ]; then icon_src="icons/128x128.png"; fi
+        if [ -z "$icon_src" ] && [ -f "icons/icon.png" ]; then icon_src="icons/icon.png"; fi
+        if [ -n "$icon_src" ]; then
+          install -Dm644 "$icon_src" /app/share/icons/hicolor/128x128/apps/io.github.easytier.EasyTierGUI.png
+        fi

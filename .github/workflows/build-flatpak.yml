@@ -1,0 +1,51 @@
+name: build-flatpak
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Flatpak tooling
+        shell: bash
+        run: |
+          set -euxo pipefail
+          sudo apt-get update
+          sudo apt-get install -y flatpak flatpak-builder
+
+      - name: Add Flathub remote
+        shell: bash
+        run: |
+          set -euxo pipefail
+          sudo flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+
+      - name: Install runtime + SDK
+        shell: bash
+        run: |
+          set -euxo pipefail
+          sudo flatpak install -y flathub \
+            org.freedesktop.Platform//24.08 \
+            org.freedesktop.Sdk//24.08 \
+            org.freedesktop.Sdk.Extension.rust-stable//24.08 \
+            org.freedesktop.Sdk.Extension.node20//24.08
+
+      - name: Build Flatpak (repo + bundle)
+        shell: bash
+        run: |
+          set -euxo pipefail
+          flatpak-builder --force-clean --repo=repo builddir packaging/flatpak/io.github.easytier.EasyTierGUI.yml
+          flatpak build-bundle repo io.github.easytier.EasyTierGUI.flatpak io.github.easytier.EasyTierGUI \
+            --runtime-repo=https://flathub.org/repo/flathub.flatpakrepo
+
+      - name: Upload Flatpak bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: easytier-gui-flatpak
+          path: io.github.easytier.EasyTierGUI.flatpak
