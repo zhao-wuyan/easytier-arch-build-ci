@@ -51,7 +51,15 @@ modules:
         PNPM="$PNPM_HOME/bin/pnpm"
         "$PNPM" -v
 
-        cd EasyTier-*
+        src_dir="$(ls -d EasyTier-* 2>/dev/null | head -n 1 || true)"
+        if [ -n "$src_dir" ]; then
+          cd "$src_dir"
+        fi
+        if [ ! -d "easytier-gui" ]; then
+          echo "Expected EasyTier sources in: $PWD"
+          ls -la
+          exit 1
+        fi
         "$PNPM" config set store-dir "$PNPM_STORE_PATH"
         "$PNPM" config set dangerouslyAllowAllBuilds true
         "$PNPM" config set registry https://registry.npmmirror.com/
