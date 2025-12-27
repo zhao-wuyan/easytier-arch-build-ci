@@ -39,32 +39,38 @@ modules:
       - type: file
         path: io.github.easytier.EasyTierGUI.metainfo.xml
     build-commands:
-      - set -euxo pipefail
-      - export HOME="$PWD"
-      - export PATH="$CARGO_HOME/bin:$PATH"
-      - mkdir -p "$PNPM_HOME" "$PNPM_STORE_PATH"
-      # Avoid npm registry DNS flakiness in CI by using the pnpm static binary from GitHub releases.
-      - install -Dm755 "$FLATPAK_BUILDER_BUILDDIR/pnpm-linuxstatic-x64" "$PNPM_HOME/bin/pnpm"
-      - export PATH="$PNPM_HOME/bin:$PATH"
-      - pnpm -v
-      - cd EasyTier-*
-      - pnpm config set store-dir "$PNPM_STORE_PATH"
-      - pnpm config set dangerouslyAllowAllBuilds true
-      - pnpm config set registry https://registry.npmmirror.com/
-      - pnpm config set fetch-retries 5
-      - pnpm config set fetch-retry-mintimeout 20000
-      - pnpm config set fetch-retry-maxtimeout 120000
-      - pnpm install --frozen-lockfile
-      - pnpm --dir easytier-web/frontend-lib build
-      - pnpm --dir tauri-plugin-vpnservice build
-      - pnpm --dir easytier-gui build
-      - cd easytier-gui/src-tauri
-      - cargo build --release --bins --features tauri/custom-protocol
-      - install -Dm755 target/release/easytier-gui /app/bin/easytier-gui
-      - install -Dm644 "$FLATPAK_BUILDER_BUILDDIR/io.github.easytier.EasyTierGUI.desktop" /app/share/applications/io.github.easytier.EasyTierGUI.desktop
-      - install -Dm644 "$FLATPAK_BUILDER_BUILDDIR/io.github.easytier.EasyTierGUI.metainfo.xml" /app/share/metainfo/io.github.easytier.EasyTierGUI.metainfo.xml
+      # flatpak-builder runs each build-command in its own shell; keep everything in one script so env/cd persist.
       - |
         set -euxo pipefail
+
+        export HOME="$PWD"
+        export PATH="$CARGO_HOME/bin:$PATH"
+
+        mkdir -p "$PNPM_HOME/bin" "$PNPM_STORE_PATH"
+        install -Dm755 "$FLATPAK_BUILDER_BUILDDIR/pnpm-linuxstatic-x64" "$PNPM_HOME/bin/pnpm"
+        PNPM="$PNPM_HOME/bin/pnpm"
+        "$PNPM" -v
+
+        cd EasyTier-*
+        "$PNPM" config set store-dir "$PNPM_STORE_PATH"
+        "$PNPM" config set dangerouslyAllowAllBuilds true
+        "$PNPM" config set registry https://registry.npmmirror.com/
+        "$PNPM" config set fetch-retries 5
+        "$PNPM" config set fetch-retry-mintimeout 20000
+        "$PNPM" config set fetch-retry-maxtimeout 120000
+
+        "$PNPM" install --frozen-lockfile
+        "$PNPM" --dir easytier-web/frontend-lib build
+        "$PNPM" --dir tauri-plugin-vpnservice build
+        "$PNPM" --dir easytier-gui build
+
+        cd easytier-gui/src-tauri
+        cargo build --release --bins --features tauri/custom-protocol
+
+        install -Dm755 target/release/easytier-gui /app/bin/easytier-gui
+        install -Dm644 "$FLATPAK_BUILDER_BUILDDIR/io.github.easytier.EasyTierGUI.desktop" /app/share/applications/io.github.easytier.EasyTierGUI.desktop
+        install -Dm644 "$FLATPAK_BUILDER_BUILDDIR/io.github.easytier.EasyTierGUI.metainfo.xml" /app/share/metainfo/io.github.easytier.EasyTierGUI.metainfo.xml
+
         icon_src=""
         if [ -f "icons/128x128.png" ]; then icon_src="icons/128x128.png"; fi
         if [ -z "$icon_src" ] && [ -f "icons/icon.png" ]; then icon_src="icons/icon.png"; fi
