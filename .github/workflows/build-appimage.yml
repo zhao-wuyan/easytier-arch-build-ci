@@ -14,7 +14,7 @@ on:
       arch_snapshot:
         description: "Arch Linux Archive snapshot date (YYYY/MM/DD) to control glibc compatibility (SteamOS 3.7 is glibc 2.41)"
         required: false
-        default: "2025/10/01"
+        default: "2025/07/01"
 
 jobs:
   build:
@@ -49,7 +49,7 @@ jobs:
           if [[ -n "${INPUT_ARCH_SNAPSHOT}" ]]; then
             snapshot="${INPUT_ARCH_SNAPSHOT}"
           else
-            snapshot="2025/10/01"
+            snapshot="2025/07/01"
           fi
           echo "arch_snapshot=${snapshot}" >> "$GITHUB_OUTPUT"
 
@@ -84,7 +84,8 @@ jobs:
         shell: bash
         run: |
           set -euxo pipefail
-          glibc_ver="$(ldd --version | head -n 1 | awk '{print $NF}')"
+          # Avoid SIGPIPE (exit 141) under pipefail by not using `head` on a pipe.
+          glibc_ver="$(ldd --version | awk 'NR==1{print $NF}')"
           echo "Container glibc: ${glibc_ver}"
           export GLIBC_VER="$glibc_ver"
           python - <<'PY'
