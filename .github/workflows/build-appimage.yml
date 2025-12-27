@@ -71,7 +71,7 @@ jobs:
         run: |
           pacman -Syu --noconfirm --needed \
             curl tar xz \
-            rust protobuf git \
+            rustup protobuf git \
             clang llvm pkgconf zstd \
             nodejs pnpm python \
             xdg-utils \
@@ -113,11 +113,27 @@ jobs:
             .cache/cargo/git
             .cache/target
             .cache/pnpm-store
+            .cache/rustup
             .cache/tauri
           key: appimage-cache-${{ steps.version.outputs.version }}-${{ github.run_id }}
           restore-keys: |
             appimage-cache-${{ steps.version.outputs.version }}-
             appimage-cache-
+
+      - name: Install Rust toolchain (easytier MSRV)
+        shell: bash
+        run: |
+          set -euxo pipefail
+          export CARGO_HOME="$GITHUB_WORKSPACE/.cache/cargo"
+          export RUSTUP_HOME="$GITHUB_WORKSPACE/.cache/rustup"
+          export PATH="$CARGO_HOME/bin:$PATH"
+
+          rustup set profile minimal
+          rustup toolchain install 1.89.0 --no-self-update
+          rustup default 1.89.0
+
+          rustc -V
+          cargo -V
 
       - name: Sanity check bundler deps
         run: |
@@ -149,8 +165,10 @@ jobs:
           cd "EasyTier-${{ steps.version.outputs.version }}"
 
           export CARGO_HOME="$GITHUB_WORKSPACE/.cache/cargo"
+          export RUSTUP_HOME="$GITHUB_WORKSPACE/.cache/rustup"
           export CARGO_TARGET_DIR="$GITHUB_WORKSPACE/.cache/target"
           export PNPM_STORE_PATH="$GITHUB_WORKSPACE/.cache/pnpm-store"
+          export PATH="$CARGO_HOME/bin:$PATH"
           pnpm config set store-dir "$PNPM_STORE_PATH"
 
           # linuxdeploy is distributed as an AppImage; in CI containers FUSE is often unavailable.
@@ -210,6 +228,7 @@ jobs:
             .cache/cargo/git
             .cache/target
             .cache/pnpm-store
+            .cache/rustup
             .cache/tauri
           key: appimage-cache-${{ steps.version.outputs.version }}-${{ github.run_id }}
 
