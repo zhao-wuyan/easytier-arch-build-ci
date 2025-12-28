@@ -26,6 +26,7 @@ modules:
         RUSTUP_HOME: /run/build/easytier-gui/.cache/rustup
         PNPM_HOME: /run/build/easytier-gui/.cache/pnpm-home
         PNPM_STORE_PATH: /run/build/easytier-gui/.cache/pnpm-store
+        NODE_OPTIONS: --dns-result-order=ipv4first
     sources:
       - type: archive
         url: https://github.com/EasyTier/EasyTier/archive/refs/tags/v2.4.5.tar.gz
@@ -45,6 +46,7 @@ modules:
 
         export HOME="$PWD"
         export PATH="$CARGO_HOME/bin:$PATH"
+        export NODE_OPTIONS="${NODE_OPTIONS:-} --dns-result-order=ipv4first"
 
         mkdir -p "$PNPM_HOME/bin" "$PNPM_STORE_PATH"
         install -Dm755 "$FLATPAK_BUILDER_BUILDDIR/pnpm-linuxstatic-x64" "$PNPM_HOME/bin/pnpm"
@@ -62,10 +64,10 @@ modules:
         fi
         "$PNPM" config set store-dir "$PNPM_STORE_PATH"
         "$PNPM" config set dangerouslyAllowAllBuilds true
-        "$PNPM" config set fetch-retries 5
+        "$PNPM" config set fetch-retries 7
         "$PNPM" config set fetch-retry-mintimeout 20000
         "$PNPM" config set fetch-retry-maxtimeout 120000
-        "$PNPM" config set network-concurrency 4
+        "$PNPM" config set network-concurrency 2
 
         # CI DNS can be flaky; try a couple of registries before failing.
         ok=0
