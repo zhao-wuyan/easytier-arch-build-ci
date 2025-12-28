@@ -65,10 +65,11 @@ modules:
         "$PNPM" config set fetch-retries 5
         "$PNPM" config set fetch-retry-mintimeout 20000
         "$PNPM" config set fetch-retry-maxtimeout 120000
+        "$PNPM" config set network-concurrency 4
 
         # CI DNS can be flaky; try a couple of registries before failing.
         ok=0
-        for reg in https://registry.npmmirror.com/ https://registry.npmjs.org/ https://registry.yarnpkg.com/; do
+        for reg in https://registry.npmjs.org/ https://registry.npmmirror.com/ https://registry.yarnpkg.com/; do
           "$PNPM" config set registry "$reg"
           set +e
           "$PNPM" install --frozen-lockfile
