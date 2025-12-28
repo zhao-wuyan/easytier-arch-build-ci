@@ -13,3 +13,6 @@ target/
 # OS/editor
 .DS_Store
 Thumbs.db
+
+# Flatpak build artifacts
+packaging/flatpak/pnpm-store.tar.gz

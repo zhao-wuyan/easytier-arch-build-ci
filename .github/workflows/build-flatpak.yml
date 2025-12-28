@@ -13,6 +13,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Determine version
+        id: version
+        shell: bash
+        run: |
+          set -euxo pipefail
+          version="$(grep -Eo 'v[0-9]+\.[0-9]+\.[0-9]+\.tar\.gz' packaging/flatpak/io.github.easytier.EasyTierGUI.yml | head -n 1 | sed -E 's/^v|\.tar\.gz$//g')"
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+
       - name: Configure DNS (reduce EAI_AGAIN)
         shell: bash
         run: |
@@ -73,6 +81,23 @@ jobs:
           key: flatpak-builder-cache-${{ hashFiles('packaging/flatpak/io.github.easytier.EasyTierGUI.yml') }}
           restore-keys: |
             flatpak-builder-cache-
+
+      - name: Restore pnpm store cache (Flatpak)
+        uses: actions/cache@v4
+        with:
+          path: .cache/pnpm-store-flatpak
+          key: pnpm-store-flatpak-${{ steps.version.outputs.version }}-pnpm-9.15.4
+          restore-keys: |
+            pnpm-store-flatpak-${{ steps.version.outputs.version }}-
+            pnpm-store-flatpak-
+
+      - name: Prepare pnpm offline store (for Flatpak build)
+        shell: bash
+        run: |
+          set -euxo pipefail
+          chmod +x packaging/flatpak/scripts/make-pnpm-store.sh
+          mkdir -p .cache/pnpm-store-flatpak
+          packaging/flatpak/scripts/make-pnpm-store.sh "${{ steps.version.outputs.version }}" packaging/flatpak/pnpm-store.tar.gz .cache/pnpm-store-flatpak
 
       - name: Build Flatpak (repo + bundle)
         shell: bash

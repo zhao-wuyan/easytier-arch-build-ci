@@ -15,10 +15,12 @@ It is primarily meant to support SteamOS/Steam Deck users where AppImage can be 
 
 Flathub builds are offline (no network during build), so **Node dependencies must be vendored**.
 
-Typical approach:
+This repo uses a pragmatic approach for CI:
 
-1. Use `flatpak-builder-tools` (node generator) to generate sources from the lockfile.
-2. Add the generated `generated-sources*.json` as a `type: file` source in the manifest.
-3. Set `build-options: { no-network: true }` for the module before submitting to Flathub.
+- CI pre-generates a `pnpm` store tarball (`packaging/flatpak/pnpm-store.tar.gz`)
+- The Flatpak manifest includes it as a local source and runs `pnpm install --offline`
 
-This repo does not yet include the generated Node dependency sources.
+For Flathub submission, you should replace the local `path: pnpm-store.tar.gz` source with either:
+
+1. A pinned remote URL + sha256 (e.g. a GitHub release asset you publish), or
+2. The more “standard” Flathub approach: use `flatpak-builder-tools` node generator to produce `generated-sources*.json`.

@@ -61,7 +61,7 @@ SteamOS may have issues running AppImage (FUSE/glibc/Wayland/WebKitGTK). Flatpak
 - Manifest: `packaging/flatpak/io.github.easytier.EasyTierGUI.yml`
 - CI workflow (test build): `.github/workflows/build-flatpak.yml`
 
-Flathub note: Flathub builds are offline, so Node dependencies must be vendored (e.g. via flatpak-builder-tools node generator) before submitting.
+Flathub note: Flathub builds are offline. This repo’s CI pre-generates a `pnpm` store tarball and uses `pnpm install --offline`; for Flathub you should pin that tarball as a remote source (or generate `generated-sources*.json`).
 
 ## Notes
 
