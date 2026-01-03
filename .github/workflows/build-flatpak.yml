@@ -77,7 +77,7 @@ jobs:
       - name: Restore flatpak-builder cache
         uses: actions/cache@v4
         with:
-          path: .flatpak-builder/cache
+          path: packaging/flatpak/.flatpak-builder/cache
           key: flatpak-builder-cache-${{ hashFiles('packaging/flatpak/io.github.easytier.EasyTierGUI.yml') }}
           restore-keys: |
             flatpak-builder-cache-
@@ -103,13 +103,17 @@ jobs:
         shell: bash
         run: |
           set -euxo pipefail
+          ls -lh packaging/flatpak/pnpm-store.tar.gz
           ok=0
           for i in 1 2 3; do
-            rm -rf builddir repo
-            if flatpak-builder --force-clean --repo=repo builddir packaging/flatpak/io.github.easytier.EasyTierGUI.yml; then
+            rm -rf packaging/flatpak/builddir packaging/flatpak/repo
+            pushd packaging/flatpak
+            if flatpak-builder --force-clean --repo=repo builddir io.github.easytier.EasyTierGUI.yml; then
               ok=1
+              popd
               break
             fi
+            popd
             echo "flatpak-builder failed (attempt $i), retrying..."
             sleep "$((i * 15))"
           done
@@ -117,11 +121,13 @@ jobs:
             echo "flatpak-builder failed after retries"
             exit 1
           fi
+          pushd packaging/flatpak
           flatpak build-bundle repo io.github.easytier.EasyTierGUI.flatpak io.github.easytier.EasyTierGUI \
             --runtime-repo=https://flathub.org/repo/flathub.flatpakrepo
+          popd
 
       - name: Upload Flatpak bundle
         uses: actions/upload-artifact@v4
         with:
           name: easytier-gui-flatpak
-          path: io.github.easytier.EasyTierGUI.flatpak
+          path: packaging/flatpak/io.github.easytier.EasyTierGUI.flatpak
