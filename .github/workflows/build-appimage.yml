@@ -56,6 +56,12 @@ jobs:
             gdk-pixbuf2 \
             webkit2gtk-4.1 gtk3 librsvg libayatana-appindicator
 
+          # 固定的 base-devel 镜像可能显示 binutils 已安装，但实际缺少 ld。
+          # 强制重装，避免 --needed 信任不一致的包数据库。
+          pacman -S --noconfirm binutils
+          command -v ld
+          ld --version | sed -n '1p'
+
       - name: Show glibc version
         shell: bash
         run: |
