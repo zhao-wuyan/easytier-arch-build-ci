@@ -17,6 +17,18 @@ finish-args:
   - --device=dri
 
 modules:
+  - name: protoc
+    buildsystem: simple
+    cleanup:
+      - "*"
+    build-commands:
+      - install -Dm755 bin/protoc /app/bin/protoc
+      - cp -r include /app/
+    sources:
+      - type: archive
+        url: https://github.com/protocolbuffers/protobuf/releases/download/v29.3/protoc-29.3-linux-x86_64.zip
+        sha256: 3e866620c5be27664f3d2fa2d656b5f3e09b5152b42f1bedbf427b333e90021a
+
   - name: easytier-gui
     buildsystem: simple
     build-options:
@@ -29,6 +41,7 @@ modules:
         PNPM_HOME: /run/build/easytier-gui/.cache/pnpm-home
         PNPM_STORE_PATH: /run/build/easytier-gui/.cache/pnpm-store
         NODE_OPTIONS: --dns-result-order=ipv4first
+        PROTOC: /app/bin/protoc
     sources:
       - type: archive
         url: https://github.com/EasyTier/EasyTier/archive/refs/tags/v2.6.4.tar.gz
