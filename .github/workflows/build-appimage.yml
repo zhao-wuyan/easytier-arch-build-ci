@@ -73,6 +73,8 @@ jobs:
           }
 
           retry_pacman pacman -Syy --noconfirm
+          pacman-key --init
+          pacman-key --populate archlinux
 
       - name: Install build dependencies
         run: |
