@@ -11,16 +11,12 @@ on:
         description: "EasyTier version tag (e.g. 2.6.4)"
         required: true
         default: "2.6.4"
-      arch_snapshot:
-        description: "Arch Linux Archive snapshot date (YYYY/MM/DD) to control glibc compatibility (SteamOS 3.7 is glibc 2.41)"
-        required: false
-        default: "2025/07/06"
 
 jobs:
   build:
     runs-on: ubuntu-latest
     container:
-      image: archlinux:base-devel-20250706.0.377547@sha256:7beca11cc5203d0d7ee2e1202637f2600233b9e6195209f503d42ba356d414e3
+      image: archlinux:base-devel-20260719.0.558177@sha256:412efebb0eeef0ef322ff24ad73f82b1ba2d3b12377db4c5fbe3074c7e7e8678
 
     steps:
       - name: Checkout
@@ -31,7 +27,6 @@ jobs:
         shell: bash
         env:
           INPUT_VERSION: ${{ github.event.inputs.version }}
-          INPUT_ARCH_SNAPSHOT: ${{ github.event.inputs.arch_snapshot }}
           REF_NAME: ${{ github.ref_name }}
         run: |
           set -euo pipefail
@@ -43,42 +38,10 @@ jobs:
             version="$(sed -n 's/^pkgver=//p' packaging/arch/PKGBUILD | head -n 1)"
           fi
           echo "version=${version}" >> "$GITHUB_OUTPUT"
-          if [[ -n "${INPUT_ARCH_SNAPSHOT}" ]]; then
-            snapshot="${INPUT_ARCH_SNAPSHOT}"
-          else
-            snapshot="2025/07/06"
-          fi
-          echo "arch_snapshot=${snapshot}" >> "$GITHUB_OUTPUT"
-
-      - name: Configure Arch Linux Archive
-        shell: bash
-        run: |
-          set -euxo pipefail
-          snapshot='${{ steps.version.outputs.arch_snapshot }}'
-          cat > /etc/pacman.d/mirrorlist <<EOF
-          Server = https://archive.archlinux.org/repos/${snapshot}/\$repo/os/\$arch
-          EOF
-          retry_pacman() {
-            local attempt
-            for attempt in 1 2 3; do
-              if "$@"; then
-                return 0
-              fi
-              if [[ "$attempt" -eq 3 ]]; then
-                echo "Command failed after ${attempt} attempts: $*" >&2
-                return 1
-              fi
-              sleep "$((attempt * 15))"
-            done
-          }
-
-          retry_pacman pacman -Syy --noconfirm
-          pacman-key --init
-          pacman-key --populate archlinux
 
       - name: Install build dependencies
         run: |
-          pacman -S --noconfirm --needed \
+          pacman -Syu --noconfirm --needed \
             curl tar xz \
             rustup protobuf git \
             clang llvm pkgconf zstd \
@@ -89,30 +52,11 @@ jobs:
             gdk-pixbuf2 \
             webkit2gtk-4.1 gtk3 librsvg libayatana-appindicator
 
-      - name: Verify glibc version (SteamOS compatibility)
+      - name: Show glibc version
         shell: bash
         run: |
           set -euxo pipefail
-          # Avoid SIGPIPE (exit 141) under pipefail by not using `head` on a pipe.
-          glibc_ver="$(ldd --version | awk 'NR==1{print $NF}')"
-          echo "Container glibc: ${glibc_ver}"
-          export GLIBC_VER="$glibc_ver"
-          python - <<'PY'
-          import os, re, sys
-          v = os.environ["GLIBC_VER"]
-          def parse(ver: str):
-            m = re.match(r"^(\d+)\.(\d+)", ver.strip())
-            if not m:
-              raise SystemExit(f"cannot parse glibc version: {ver!r}")
-            return int(m.group(1)), int(m.group(2))
-          cur = parse(v)
-          max_ok = parse("2.41")
-          if cur > max_ok:
-            raise SystemExit(
-              f"glibc {v} is too new for SteamOS (2.41). "
-              f"Choose an older arch_snapshot (YYYY/MM/DD) so glibc<=2.41."
-            )
-          PY
+          ldd --version | sed -n '1p'
 
       - name: Restore cache (cargo + pnpm)
         uses: actions/cache/restore@v4
