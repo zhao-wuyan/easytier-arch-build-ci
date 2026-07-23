@@ -41,6 +41,15 @@ sha256sums=('SKIP')
 
 prepare() {
   cd "EasyTier-${pkgver}"
+  # pnpm 10+ reads overrides from pnpm-workspace.yaml instead of package.json.
+  if grep -Eq '"minimatch"[[:space:]]*:[[:space:]]*"10\.2\.4"' package.json &&
+     ! grep -q '^overrides:' pnpm-workspace.yaml; then
+    printf '\n' >> pnpm-workspace.yaml
+    cat >> pnpm-workspace.yaml <<'EOF'
+overrides:
+  minimatch: 10.2.4
+EOF
+  fi
 
   # speed up rebuilds in CI by placing pnpm store under $srcdir (which is cacheable)
   export PNPM_STORE_PATH="${srcdir}/pnpm-store"

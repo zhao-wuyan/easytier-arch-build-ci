@@ -61,11 +61,25 @@ jobs:
           cat > /etc/pacman.d/mirrorlist <<EOF
           Server = https://archive.archlinux.org/repos/${snapshot}/\$repo/os/\$arch
           EOF
+          retry_pacman() {
+            local attempt
+            for attempt in 1 2 3; do
+              if "$@"; then
+                return 0
+              fi
+              if [[ "$attempt" -eq 3 ]]; then
+                echo "Command failed after ${attempt} attempts: $*" >&2
+                return 1
+              fi
+              sleep "$((attempt * 15))"
+            done
+          }
+
           # Downgrading across snapshots may hit transient file ownership conflicts when packages are split/merged.
           # If this happens, remove the old dropins package and allow pacman to overwrite the one known path.
-          pacman -Syy --noconfirm
+          retry_pacman pacman -Syy --noconfirm
           pacman -Rdd --noconfirm libmakepkg-dropins || true
-          pacman -Syyuu --noconfirm --overwrite /usr/share/makepkg/reproducible/python.sh
+          retry_pacman pacman -Syyuu --noconfirm --overwrite /usr/share/makepkg/reproducible/python.sh
 
       - name: Install build dependencies
         run: |
@@ -163,6 +177,15 @@ jobs:
         run: |
           set -euxo pipefail
           cd "EasyTier-${{ steps.version.outputs.version }}"
+          # pnpm 10+ reads overrides from pnpm-workspace.yaml instead of package.json.
+          if grep -Eq '"minimatch"[[:space:]]*:[[:space:]]*"10\.2\.4"' package.json &&
+             ! grep -q '^overrides:' pnpm-workspace.yaml; then
+            printf '\n' >> pnpm-workspace.yaml
+            cat >> pnpm-workspace.yaml <<'EOF'
+          overrides:
+            minimatch: 10.2.4
+          EOF
+          fi
 
           export CARGO_HOME="$GITHUB_WORKSPACE/.cache/cargo"
           export RUSTUP_HOME="$GITHUB_WORKSPACE/.cache/rustup"
