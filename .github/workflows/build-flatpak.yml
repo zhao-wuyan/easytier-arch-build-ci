@@ -69,10 +69,10 @@ jobs:
         run: |
           set -euxo pipefail
           sudo flatpak install -y flathub \
-            org.freedesktop.Platform//24.08 \
-            org.freedesktop.Sdk//24.08 \
-            org.freedesktop.Sdk.Extension.rust-stable//24.08 \
-            org.freedesktop.Sdk.Extension.node20//24.08
+            org.freedesktop.Platform//25.08 \
+            org.freedesktop.Sdk//25.08 \
+            org.freedesktop.Sdk.Extension.rust-stable//25.08 \
+            org.freedesktop.Sdk.Extension.node20//25.08
 
       - name: Restore flatpak-builder cache
         uses: actions/cache@v4
