@@ -88,6 +88,11 @@ modules:
           ls -la
           exit 1
         fi
+        # Patch: skip privilege escalation (pkexec) inside flatpak sandbox.
+        # EasyTier GUI calls check_sudo() at startup to re-exec itself via pkexec as root.
+        # In a flatpak sandbox pkexec does not exist, causing a panic at lib.rs:594.
+        # When the "container" env var is "flatpak" (auto-set by flatpak), skip the check.
+        sed -i 's/if !check_sudo() {/if std::env::var("container").as_deref() != Ok("flatpak") \&\& !check_sudo() {/' easytier-gui/src-tauri/src/lib.rs
         "$PNPM" config set store-dir "$PNPM_STORE_PATH"
         "$PNPM" config set dangerouslyAllowAllBuilds true
         "$PNPM" config set fetch-retries 7
