@@ -11,6 +11,10 @@ on:
         description: "EasyTier version tag (e.g. 2.6.4)"
         required: true
         default: "2.6.4"
+      arch_snapshot:
+        description: "Deprecated; retained for API compatibility and ignored by the pinned Arch image"
+        required: false
+        default: ""
 
 jobs:
   build:
