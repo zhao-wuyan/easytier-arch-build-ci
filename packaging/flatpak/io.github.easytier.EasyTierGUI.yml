@@ -6,6 +6,7 @@ sdk: org.gnome.Sdk
 sdk-extensions:
   - org.freedesktop.Sdk.Extension.rust-stable
   - org.freedesktop.Sdk.Extension.node20
+  - org.freedesktop.Sdk.Extension.llvm21
 
 command: easytier-gui
 
@@ -35,7 +36,7 @@ modules:
     build-options:
       build-args:
         - --share=network
-      append-path: /usr/lib/sdk/rust-stable/bin:/usr/lib/sdk/node20/bin
+      append-path: /usr/lib/sdk/rust-stable/bin:/usr/lib/sdk/node20/bin:/usr/lib/sdk/llvm21/bin
       env:
         CARGO_HOME: /run/build/easytier-gui/.cache/cargo
         RUSTUP_HOME: /run/build/easytier-gui/.cache/rustup
@@ -43,6 +44,7 @@ modules:
         PNPM_STORE_PATH: /run/build/easytier-gui/.cache/pnpm-store
         NODE_OPTIONS: --dns-result-order=ipv4first
         PROTOC: /app/bin/protoc
+        LIBCLANG_PATH: /usr/lib/sdk/llvm21/lib
     sources:
       - type: archive
         url: https://github.com/EasyTier/EasyTier/archive/refs/tags/v2.6.4.tar.gz

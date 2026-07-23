@@ -72,7 +72,8 @@ jobs:
             org.gnome.Platform//50 \
             org.gnome.Sdk//50 \
             org.freedesktop.Sdk.Extension.rust-stable//25.08 \
-            org.freedesktop.Sdk.Extension.node20//25.08
+            org.freedesktop.Sdk.Extension.node20//25.08 \
+            org.freedesktop.Sdk.Extension.llvm21//25.08
 
       - name: Restore flatpak-builder cache
         uses: actions/cache@v4
