@@ -26,6 +26,7 @@ modules:
       - cp -r include /app/
     sources:
       - type: archive
+        strip-components: 0
         url: https://github.com/protocolbuffers/protobuf/releases/download/v29.3/protoc-29.3-linux-x86_64.zip
         sha256: 3e866620c5be27664f3d2fa2d656b5f3e09b5152b42f1bedbf427b333e90021a
 
