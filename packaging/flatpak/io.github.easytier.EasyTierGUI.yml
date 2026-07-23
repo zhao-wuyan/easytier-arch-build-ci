@@ -29,8 +29,8 @@ modules:
         NODE_OPTIONS: --dns-result-order=ipv4first
     sources:
       - type: archive
-        url: https://github.com/EasyTier/EasyTier/archive/refs/tags/v2.4.5.tar.gz
-        sha256: 8bce53d0390bc9b2842bb863de1d4f18e6bb145fa41ec9d49683285e54423b98
+        url: https://github.com/EasyTier/EasyTier/archive/refs/tags/v2.6.4.tar.gz
+        sha256: 352c0866da709415a837405a6ce4f51b8dfae27e5d5c1da1fb4d8f7338e46795
       - type: file
         url: https://github.com/pnpm/pnpm/releases/download/v9.15.4/pnpm-linuxstatic-x64
         sha256: 2aab9d9e6e35f106c52c46b750c3a36277dd9a58cb517c818b5efc930cf3601c

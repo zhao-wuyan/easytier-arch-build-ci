@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-version="${1:-2.4.5}"
+version="${1:-2.6.4}"
 out_path="${2:-packaging/flatpak/pnpm-store.tar.gz}"
 store_dir_arg="${3:-}"
 
@@ -9,9 +9,10 @@ workdir="$(mktemp -d)"
 trap 'rm -rf "$workdir"' EXIT
 
 pnpm_bin="$workdir/pnpm"
-store_dir="${store_dir_arg:-$workdir/pnpm-store}"
+store_dir="$(realpath -m "${store_dir_arg:-$workdir/pnpm-store}")"
+out_path="$(realpath -m "$out_path")"
 
-mkdir -p "$store_dir"
+mkdir -p "$store_dir" "$(dirname "$out_path")"
 
 curl -L -o "$pnpm_bin" "https://github.com/pnpm/pnpm/releases/download/v9.15.4/pnpm-linuxstatic-x64"
 chmod +x "$pnpm_bin"
@@ -36,7 +37,6 @@ cd "$src_root"
 
 "$pnpm_bin" fetch --frozen-lockfile
 
-mkdir -p "$(dirname "$out_path")"
 tar -czf "$out_path" -C "$store_dir" .
 
 echo "Wrote $out_path"

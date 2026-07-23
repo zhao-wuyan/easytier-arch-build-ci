@@ -5,7 +5,7 @@ pkgname=(
   'easytier'
   'easytier-gui'
 )
-pkgver=2.4.5
+pkgver=2.6.4
 pkgrel=1
 arch=('x86_64')
 url="https://github.com/EasyTier/EasyTier"
