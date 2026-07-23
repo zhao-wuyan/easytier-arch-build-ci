@@ -14,13 +14,13 @@ on:
       arch_snapshot:
         description: "Arch Linux Archive snapshot date (YYYY/MM/DD) to control glibc compatibility (SteamOS 3.7 is glibc 2.41)"
         required: false
-        default: "2025/07/01"
+        default: "2025/07/06"
 
 jobs:
   build:
     runs-on: ubuntu-latest
     container:
-      image: archlinux:base-devel
+      image: archlinux:base-devel-20250706.0.377547@sha256:7beca11cc5203d0d7ee2e1202637f2600233b9e6195209f503d42ba356d414e3
 
     steps:
       - name: Checkout
@@ -43,17 +43,14 @@ jobs:
             version="$(sed -n 's/^pkgver=//p' packaging/arch/PKGBUILD | head -n 1)"
           fi
           echo "version=${version}" >> "$GITHUB_OUTPUT"
-
-          # Pin to an Arch Linux Archive snapshot so the produced AppImage can run on older distros/SteamOS.
-          # SteamOS currently ships glibc 2.41, so we must build against glibc <= 2.41.
           if [[ -n "${INPUT_ARCH_SNAPSHOT}" ]]; then
             snapshot="${INPUT_ARCH_SNAPSHOT}"
           else
-            snapshot="2025/07/01"
+            snapshot="2025/07/06"
           fi
           echo "arch_snapshot=${snapshot}" >> "$GITHUB_OUTPUT"
 
-      - name: Pin pacman to Arch Linux Archive snapshot
+      - name: Configure Arch Linux Archive
         shell: bash
         run: |
           set -euxo pipefail
@@ -75,15 +72,11 @@ jobs:
             done
           }
 
-          # Downgrading across snapshots may hit transient file ownership conflicts when packages are split/merged.
-          # If this happens, remove the old dropins package and allow pacman to overwrite the one known path.
           retry_pacman pacman -Syy --noconfirm
-          pacman -Rdd --noconfirm libmakepkg-dropins || true
-          retry_pacman pacman -Syyuu --noconfirm --overwrite /usr/share/makepkg/reproducible/python.sh
 
       - name: Install build dependencies
         run: |
-          pacman -Syu --noconfirm --needed \
+          pacman -S --noconfirm --needed \
             curl tar xz \
             rustup protobuf git \
             clang llvm pkgconf zstd \

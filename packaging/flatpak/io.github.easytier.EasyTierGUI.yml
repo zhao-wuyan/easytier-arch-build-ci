@@ -20,6 +20,8 @@ modules:
   - name: easytier-gui
     buildsystem: simple
     build-options:
+      build-args:
+        - --share=network
       append-path: /usr/lib/sdk/rust-stable/bin:/usr/lib/sdk/node20/bin
       env:
         CARGO_HOME: /run/build/easytier-gui/.cache/cargo
