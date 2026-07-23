@@ -20,7 +20,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     container:
-      image: archlinux:base-devel-20260719.0.558177@sha256:412efebb0eeef0ef322ff24ad73f82b1ba2d3b12377db4c5fbe3074c7e7e8678
+      image: archlinux:base-devel-20250601.0.358000@sha256:6e2243eb90d12e09cbddf7d5297ac44195928282881562e6c9d339b44c029fa7
 
     steps:
       - name: Checkout
@@ -43,9 +43,22 @@ jobs:
           fi
           echo "version=${version}" >> "$GITHUB_OUTPUT"
 
-      - name: Install build dependencies
+      # Pin all Arch repositories to the 2025-06-01 snapshot so glibc (2.41) and
+      # every linked library match SteamOS 3.9. A plain -Syu would pull the latest
+      # glibc (2.43) and break AppImage portability on Steam Deck.
+      #
+      # The pinned image's keyring predates some packager keys used in the 2025-06
+      # snapshot, so we disable signature verification for the whole install phase
+      # and re-enable it afterwards.
+      - name: Pin Arch repositories and install dependencies
         run: |
-          pacman -Syu --noconfirm --needed \
+          set -euxo pipefail
+          printf 'Server = https://archive.archlinux.org/repos/2025/06/01/$repo/os/$arch\n' > /etc/pacman.d/mirrorlist
+          sed -i 's/^\[options\]/[options]\nSigLevel = Never/' /etc/pacman.conf
+          pacman -Syy --noconfirm
+          ldd --version | sed -n '1p'
+
+          pacman -S --noconfirm --needed \
             curl tar xz \
             rustup protobuf git \
             clang llvm binutils pkgconf zstd \
@@ -61,6 +74,9 @@ jobs:
           pacman -S --noconfirm binutils
           command -v ld
           ld --version | sed -n '1p'
+
+          # Re-enable signature verification for any later pacman use.
+          sed -i '/^SigLevel = Never/d' /etc/pacman.conf
 
       - name: Show glibc version
         shell: bash
