@@ -48,7 +48,7 @@ jobs:
           pacman -Syu --noconfirm --needed \
             curl tar xz \
             rustup protobuf git \
-            clang llvm pkgconf zstd \
+            clang llvm binutils pkgconf zstd \
             nodejs pnpm python \
             xdg-utils \
             fuse2 squashfs-tools \
