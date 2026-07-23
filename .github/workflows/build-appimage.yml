@@ -141,6 +141,8 @@ jobs:
           export CARGO_TARGET_DIR="$GITHUB_WORKSPACE/.cache/target"
           export PNPM_STORE_PATH="$GITHUB_WORKSPACE/.cache/pnpm-store"
           export PATH="$CARGO_HOME/bin:$PATH"
+          # 显式告诉 GCC 的 collect2 从系统目录查找 ld。
+          export COMPILER_PATH=/usr/bin
           pnpm config set store-dir "$PNPM_STORE_PATH"
 
           # linuxdeploy is distributed as an AppImage; in CI containers FUSE is often unavailable.
